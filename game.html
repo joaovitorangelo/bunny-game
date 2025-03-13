@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absolem</title>
+</head>
+<style>
+    body {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+    }
+    main { overflow: hidden; }
+    .main {
+        display: flex;
+        align-items: end;
+        background-color: #000;
+        width: 50vw;
+        height: 50vh;
+        overflow: hidden;
+        position: relative;
+    }
+    .quadrado {
+        width: 50px;
+        height: 50px;
+        position: absolute;
+        bottom: 0;
+    }
+    .quadrado img {
+        position: relative;
+        bottom: 65px;
+    }
+    .cenouras { 
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+    .cenouras img {
+        position: absolute;
+        left: 50%;
+        top: -50px;
+        animation: cair 3s linear forwards;
+        z-index: 999;
+    }
+    .infos {
+        display: flex;
+        justify-content: space-between;
+    }
+    @keyframes cair {
+        0% {
+            transform: translateY(-100px) rotate(0deg);
+            opacity: 0.5;
+        }
+        50% {
+            opacity: 1;
+            transform: translateY(50vh) rotate(20deg);
+        }
+        100% {
+            transform: translateY(100vh) rotate(40deg);
+        }
+    }
+</style>
+<body>
+    <header>
+        <div class="pontuacao"></div>
+    </header>
+    <main>
+        <div class="cenouras"></div>
+        <div class="infos">
+            <div class="clock"></div>
+            <div class="pontos"></div>
+        </div>
+        <div class="main">
+            <div class="quadrado">
+                <img class="coelho" src="coelho-right.png" alt="">
+            </div>
+        </div>
+    </main>
+    <script>
+        const main = document.querySelector('main');
+        const quadrado = document.querySelector('.quadrado');
+        const coelho = document.querySelector('.coelho');
+        let posicaoY = 0;
+        let posicaoX = 0;
+        let pulando = false;
+        let teclasPressionadas = {};
+
+        document.addEventListener('keydown', function(event) {
+            teclasPressionadas[event.key.toLowerCase()] = true;
+
+            if (teclasPressionadas["w"] && teclasPressionadas["d"]) {
+                coelho.src = 'coelho-right.png';
+                pularLateral(1); // Pula para a direita
+            } else if (teclasPressionadas["w"] && teclasPressionadas["a"]) {
+                coelho.src = 'coelho-left.png';
+                pularLateral(-1); // Pula para a esquerda
+            } else if (event.key === "w") {
+                pular();
+            } else if (event.key === "s") {
+                if (posicaoY > 0) posicaoY -= 10;
+            } else if (event.key === "d") {
+                coelho.src = 'coelho-right.png';
+                posicaoX += 10;
+            } else if (event.key === "a") {
+                coelho.src = 'coelho-left.png';
+                posicaoX -= 10;
+            }
+            atualizarPosicao();
+            verificarLimites();
+        });
+
+        document.addEventListener('keyup', function(event) {
+            delete teclasPressionadas[event.key.toLowerCase()];
+        });
+
+        function pular() {
+            if (pulando) return;
+            pulando = true;
+
+            let alturaMaxima = 100;
+            let velocidade = 5;
+
+            function animarPulo() {
+                posicaoY += velocidade;
+                if (posicaoY >= alturaMaxima) velocidade = -5;
+                if (posicaoY <= 0) {
+                    posicaoY = 0;
+                    pulando = false;
+                    atualizarPosicao();
+                    return;
+                }
+                atualizarPosicao();
+                requestAnimationFrame(animarPulo);
+            }
+            animarPulo();
+        }
+
+        function pularLateral(direcao) {
+            if (pulando) return;
+            pulando = true;
+
+            let alturaMaxima = 100;
+            let distanciaMaxima = 50 * direcao; // Move 50px para esquerda ou direita
+            let velocidadeY = 5;
+            let velocidadeX = 2 * direcao; // Ajusta a velocidade horizontal
+
+            function animarPuloLateral() {
+                posicaoY += velocidadeY;
+                posicaoX += velocidadeX;
+
+                if (posicaoY >= alturaMaxima) velocidadeY = -5;
+                if (posicaoY <= 0) {
+                    posicaoY = 0;
+                    pulando = false;
+                    atualizarPosicao();
+                    return;
+                }
+                atualizarPosicao();
+                requestAnimationFrame(animarPuloLateral);
+            }
+            animarPuloLateral();
+        }
+
+        function atualizarPosicao() {
+            quadrado.style.transform = `translate(${posicaoX}px, ${-posicaoY}px)`;
+        }
+
+        function verificarLimites() {
+            const mainWidth = main.clientWidth; 
+            const quadradoWidth = quadrado.clientWidth; 
+            // Se o quadrado saiu totalmente pelo lado direito, reaparece um pouco antes no lado esquerdo
+            if (posicaoX > mainWidth) {
+                posicaoX = -quadradoWidth; // Reaparece mais suavemente do lado esquerdo
+            }
+            // Se o quadrado saiu totalmente pelo lado esquerdo, reaparece mais suavemente no lado direito
+            if (posicaoX < -quadradoWidth) {
+                posicaoX = mainWidth; // Reaparece mais suavemente do lado direito
+            }
+        }
+        // Relogio
+        let clock = document.querySelector('.clock');
+        let cenouras = document.querySelector('.cenouras');
+        let time = 0;
+        let maxTime = 30;
+        let interval = setInterval(() => {
+            let minutes = Math.floor(time / 60);
+            let seconds = time % 60;
+            let formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            clock.innerHTML = formattedTime;
+            if (time < maxTime) {
+                time++;
+                let img = document.createElement('img');
+                img.src = 'cenoura.png';
+                img.style.left = Math.random() * window.innerWidth + 'px';
+                cenouras.appendChild(img);
+                setTimeout(() => {
+                    img.remove();
+                }, 3000);
+            } else {
+                clearInterval(interval);
+                clock.innerHTML = 'Acabou o tempo!';
+                if ( localStorage.getItem('pontos') ) {
+                    let pontuacao = document.querySelector('.pontuacao');
+                    pontuacao.innerHTML = localStorage.getItem('pontos') + ' Cenouras coletadas!';
+                }
+                setTimeout(function() {
+                    let secondsLeft = 5;
+                    const countdown = setInterval(function() {
+                        let pontuacao = document.querySelector('.pontuacao'); // Certificando-se de selecionar o elemento correto
+                        pontuacao.textContent = 'Recomeçando em ' + secondsLeft; // Atualiza o texto da pontuação com o tempo restante
+                        secondsLeft--;
+                        
+                        if (secondsLeft < 0) {
+                            clearInterval(countdown);
+                            location.reload();
+                        }
+                    }, 1000); // Intervalo de 1 segundo
+                }, 5000); // Espera 5 segundos antes de iniciar a contagem regressiva
+            }
+        }, 1000);
+        // Comer a cenoura
+        function isColliding(coelho, cenoura) {
+            const rect1 = coelho.getBoundingClientRect();
+            const rect2 = cenoura.getBoundingClientRect();
+
+            return !(
+                rect1.right < rect2.left ||  // coelho está à esquerda da cenoura
+                rect1.left > rect2.right ||  // coelho está à direita da cenoura
+                rect1.bottom < rect2.top ||  // coelho está acima da cenoura
+                rect1.top > rect2.bottom     // coelho está abaixo da cenoura
+            );
+        }
+        let pontuacao = localStorage.getItem('pontos') || 0;
+        let p = 0;
+        setInterval(() => {
+            let cenourasAtuais = document.querySelectorAll('.cenouras img'); // Pega todas as cenouras no DOM
+            cenourasAtuais.forEach((cenoura) => {
+                if (isColliding(coelho, cenoura)) {
+                    p++;
+                    pontuacao++;
+                    let pontos = document.querySelector('.pontos');
+                    pontos.innerHTML = p + '🥕'; 
+                    cenoura.remove(); // Remove a cenoura quando o coelho encostar nela
+                }
+            });
+            localStorage.setItem('pontos', pontuacao);
+        }, 100); // Verifica a colisão a cada 100ms
+    </script>
+</body>
+</html>
