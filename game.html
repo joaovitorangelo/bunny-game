@@ -7,6 +7,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </head>
 <style>
+    @font-face {
+        font-family: 'PixelOperator';
+        src: url('/pixel_operator/PixelOperator.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    .none { display: none; }
     body {
         display: flex;
         justify-content: center;
@@ -14,6 +21,9 @@
         align-items: center;
         height: 100vh;
         overflow: hidden;
+        font-family: 'PixelOperator';
+        font-size: 20px;
+        font-weight: bold;
     }
     main { overflow: hidden; }
     .main {
@@ -53,6 +63,8 @@
     .infos {
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
     }
     .compartilhamento { padding: 10px 0; }
     .compartilhamento button {
@@ -62,6 +74,24 @@
         color: green;
         cursor: pointer;
     }
+    .play-game-container {
+        width: 100%;
+        padding: 180px 0px 180px 0px;
+        text-align: center
+    }
+    .play-game-container img { 
+        opacity: 0;
+        width: 50%; 
+        cursor: pointer;
+        transition: .2s ease-in-out;
+    }
+    .play-game-container:hover img { opacity: 1; }
+    .pontuacao i {
+        position: relative;
+        bottom: -1px;
+    }
+    #player { display: none; }
+    .game-title img { width: 270px; }
     @keyframes cair {
         0% {
             transform: translateY(-100px) rotate(0deg);
@@ -78,21 +108,27 @@
 </style>
 <body>
     <header>
-        <div class="pontuacao"></div>
+        <div class="pontuacao none">
+            <span class="pontuacao-text"></span> Cenouras coletadas <i class="fa-brands fa-whatsapp compartilhar-whatsapp"></i>
+        </div>
+        <audio id="player" controls></audio>
     </header>
+    <section class="game-title">
+        <img src="absolem.png" alt="">
+    </section>
     <main>
-        <div class="cenouras"></div>
         <div class="infos">
             <div class="clock"></div>
             <div class="pontos"></div>
         </div>
         <div class="main">
+            <div class="cenouras"></div>
+            <div class="play-game-container">
+                <img class="comecar-imagem" src="comecar.png" alt="">
+            </div>
             <div class="quadrado">
                 <img class="coelho" src="coelho-right.png" alt="">
             </div>
-        </div>
-        <div class="compartilhamento">
-            <button class="compartilhar-whatsapp"><i class="fa-brands fa-whatsapp"></i></button>
         </div>
     </main>
     <script>
@@ -103,6 +139,35 @@
         let posicaoX = 0;
         let pulando = false;
         let teclasPressionadas = {};
+
+        let comecarImagem = document.querySelector('.comecar-imagem');
+        comecarImagem.addEventListener('click', function() {
+            comecarImagem.style.width = '115px';
+            comecarImagem.style.opacity = '0';
+            setTimeout(function(){
+                comecarImagem.style.opacity = '1';
+                comecarImagem.src = '1.png';
+                    setTimeout(function() {
+                        comecarImagem.src = '2.png';
+                            setTimeout(function() {
+                                comecarImagem.src = '3.png';
+                                    setTimeout(function() {
+                                        comecarImagem.style.width = '250px';
+                                        comecarImagem.src = 'ja.png';
+                                            setTimeout(function() {
+                                                comecarImagem.remove();
+                                                playGame();
+                                            }, 300);
+                                    }, 300);
+                            }, 300);
+                    }, 300);
+            }, 300);
+            const player = document.getElementById("player");
+            player.src = 'umdoistreseja.mp3';
+            player.play().catch(error => {
+                console.warn("Erro ao tentar reproduzir:", error);
+            });
+        });
 
         document.querySelector('.compartilhar-whatsapp').addEventListener('click', function() {
             let pontos = localStorage.getItem('pontos');
@@ -115,25 +180,32 @@
             window.open(urlWhatsApp, '_blank');
         });
 
+        let jogoAtivo = true;
+
         document.addEventListener('keydown', function(event) {
+            if (!jogoAtivo) return; // Impede o movimento quando o jogo acabar
+
             teclasPressionadas[event.key.toLowerCase()] = true;
 
-            if (teclasPressionadas["w"] && teclasPressionadas["d"]) {
+            // if (teclasPressionadas["w"] && teclasPressionadas["d"]) {
+            //     coelho.src = 'coelho-right.png';
+            //     pularLateral(1); // Pula para a direita
+            // } else if (teclasPressionadas["w"] && teclasPressionadas["a"]) {
+            //     coelho.src = 'coelho-left.png';
+            //     pularLateral(-1); // Pula para a esquerda
+            // } else if (event.key === "w") {
+            //     pular();
+            // } else if (event.key === "s") {
+            //     if (posicaoY > 0) posicaoY -= 10;
+            // } 
+            if (event.key === "d" ) {
                 coelho.src = 'coelho-right.png';
-                pularLateral(1); // Pula para a direita
-            } else if (teclasPressionadas["w"] && teclasPressionadas["a"]) {
-                coelho.src = 'coelho-left.png';
-                pularLateral(-1); // Pula para a esquerda
-            } else if (event.key === "w") {
-                pular();
-            } else if (event.key === "s") {
-                if (posicaoY > 0) posicaoY -= 10;
-            } else if (event.key === "d") {
-                coelho.src = 'coelho-right.png';
-                posicaoX += 10;
+                // posicaoX += 10;
+                pularLateral(1);
             } else if (event.key === "a") {
                 coelho.src = 'coelho-left.png';
-                posicaoX -= 10;
+                // posicaoX -= 10;
+                pularLateral(-1);
             }
             atualizarPosicao();
             verificarLimites();
@@ -208,46 +280,108 @@
             }
         }
         // Relogio
-        let clock = document.querySelector('.clock');
-        let cenouras = document.querySelector('.cenouras');
-        let time = 0;
-        let maxTime = 30;
-        let interval = setInterval(() => {
-            let minutes = Math.floor(time / 60);
-            let seconds = time % 60;
-            let formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            clock.innerHTML = formattedTime;
-            if (time < maxTime) {
-                time++;
-                let img = document.createElement('img');
-                img.src = 'cenoura.png';
-                img.style.left = Math.random() * window.innerWidth + 'px';
-                cenouras.appendChild(img);
-                setTimeout(() => {
-                    img.remove();
-                }, 3000);
-            } else {
-                clearInterval(interval);
-                clock.innerHTML = 'Acabou o tempo!';
-                if ( localStorage.getItem('pontos') ) {
-                    let pontuacao = document.querySelector('.pontuacao');
-                    pontuacao.innerHTML = localStorage.getItem('pontos') + ' Cenouras coletadas!';
+        function playGame() {
+            jogoAtivo = true; // Bloqueia o movimento
+            // Lista de músicas
+            const songs = [
+                "Sky Jump.mp3",
+                "Food Drop.mp3",
+                "Connect_Cliff Jump_Cliff Dash_Jet.mp3"
+            ];
+
+            // Recupera o índice salvo ou começa do início
+            let savedIndex = parseInt(localStorage.getItem("currentSongIndex")) || 0;
+            let currentSongIndex = savedIndex < songs.length ? savedIndex : 0;
+
+            const player = document.getElementById("player");
+
+            // Função para tocar a música atual
+            function playSong(index) {
+                if (index >= songs.length) {
+                    console.log("Fim da playlist. Reiniciando...");
+                    currentSongIndex = 0; // Reinicia o índice
+                    localStorage.setItem("currentSongIndex", 0);
+                } else {
+                    currentSongIndex = 2;
+                    localStorage.setItem("currentSongIndex", index);
                 }
-                setTimeout(function() {
-                    let secondsLeft = 5;
-                    const countdown = setInterval(function() {
-                        let pontuacao = document.querySelector('.pontuacao'); // Certificando-se de selecionar o elemento correto
-                        pontuacao.textContent = 'Recomeçando em ' + secondsLeft; // Atualiza o texto da pontuação com o tempo restante
-                        secondsLeft--;
-                        
-                        if (secondsLeft < 0) {
-                            clearInterval(countdown);
-                            location.reload();
-                        }
-                    }, 1000); // Intervalo de 1 segundo
-                }, 5000); // Espera 5 segundos antes de iniciar a contagem regressiva
+
+                player.src = songs[currentSongIndex];
+                player.play().catch(error => {
+                    console.warn("Erro ao tentar reproduzir:", error);
+                });
             }
-        }, 1000);
+
+            // Remove o evento anterior e adiciona novamente
+            player.removeEventListener("ended", tocarProxima);
+            player.addEventListener("ended", tocarProxima);
+
+            function tocarProxima() {
+                playSong(currentSongIndex + 1);
+            }
+
+            // Inicia a música correta ao carregar o jogo
+            playSong(currentSongIndex);
+            
+            let clock = document.querySelector('.clock');
+            let cenouras = document.querySelector('.cenouras');
+            let time = 0;
+            let maxTime = 30;
+            let interval = setInterval(() => {
+                let minutes = Math.floor(time / 60);
+                let seconds = time % 60;
+                let formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                clock.innerHTML = formattedTime;
+                if (time < maxTime) {
+                    time++;
+                    // document.addEventListener("keydown", function(event) {
+                    //     if (event.key === "d" || event.key === 'a') {
+                    //         event.preventDefault();
+                    //     }
+                    // });
+                    let img = document.createElement('img');
+                    img.src = 'cenoura.png';
+                    img.style.left = Math.random() * window.innerWidth + 'px';
+                    cenouras.appendChild(img);
+                    setTimeout(() => {
+                        img.remove();
+                    }, 3000);
+                } else {
+                    player.src = 'Game Over.mp3';
+                    player.play().catch(error => {
+                        console.warn("Erro ao tentar reproduzir:", error);
+                    });
+                    jogoAtivo = false; // Bloqueia o movimento
+                    let coelho = document.querySelector('.coelho');
+                    coelho.src = 'absolem-gordo.png';
+                    coelho.style.width = '130px';
+                    coelho.style.top = '-125px';
+                    clearInterval(interval);
+                    clock.innerHTML = 'Acabou o tempo!';
+                    if ( localStorage.getItem('pontos') ) {
+                        let pontuacao = document.querySelector('.pontuacao');
+                        let pontuacaoText = document.querySelector('.pontuacao-text');
+                        pontuacaoText.innerHTML = localStorage.getItem('pontos');
+                        pontuacao.classList.remove('none');
+                    }
+                    setTimeout(function() {
+                        let secondsLeft = 5;
+                        const countdown = setInterval(function() {
+                            let pontuacao = document.querySelector('.pontuacao'); // Certificando-se de selecionar o elemento correto
+                            pontuacao.innerHTML = 'Recomeçando em ' + secondsLeft;
+                            secondsLeft--;
+                            
+                            if (secondsLeft < 0) {
+                                clearInterval(countdown);
+                                pontuacao.textContent = '';
+                                // playGame();
+                                location.reload();
+                            }
+                        }, 1000); // Intervalo de 1 segundo
+                    }, 5000); // Espera 5 segundos antes de iniciar a contagem regressiva
+                }
+            }, 1000);
+        }
         // Comer a cenoura
         function isColliding(coelho, cenoura) {
             const rect1 = coelho.getBoundingClientRect();
@@ -263,14 +397,26 @@
         let pontuacao = localStorage.getItem('pontos') || 0;
         let p = 0;
         setInterval(() => {
+            const sonsMordida = [
+                'mordida-efeito-sonoro-1.opus',
+                'mordida-efeito-sonoro-2.opus'
+            ];
             let cenourasAtuais = document.querySelectorAll('.cenouras img'); // Pega todas as cenouras no DOM
             cenourasAtuais.forEach((cenoura) => {
                 if (isColliding(coelho, cenoura)) {
                     p++;
                     pontuacao++;
                     let pontos = document.querySelector('.pontos');
-                    pontos.innerHTML = p + '🥕'; 
+                    pontos.innerHTML = p + ' 🥕'; 
+                    pontos.style.color = '#F7630C';
+                    setTimeout(function() {
+                        pontos.style.color = '#000';
+                    }, 1000);
                     cenoura.remove(); // Remove a cenoura quando o coelho encostar nela
+                    // Escolhe um som aleatório do array
+                    const somAleatorio = new Audio(sonsMordida[Math.floor(Math.random() * sonsMordida.length)]);
+                    somAleatorio.currentTime = 0;
+                    somAleatorio.play().catch((err) => console.error("Erro ao tocar som:", err));
                 }
             });
             localStorage.setItem('pontos', pontuacao);
